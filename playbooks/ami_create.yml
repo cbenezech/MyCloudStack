@@ -1,0 +1,27 @@
+# Description: create all images
+#
+# Variables:
+# - database_name (str): name of the database streamed by the Debezium connector
+---
+- name: setting up variables
+  hosts: "localhost:all"
+  run_once: true
+  tasks:
+    - name: get FLAVOR_ID variable
+      # yamllint disable-line rule:line-length
+      ansible.builtin.shell: openstack flavor list -f json | jq -r '.[] | select(.Name == "d2-2") | .ID'
+      register: FLAVOR_ID
+
+    - name: get NETWORK_ID variable
+      # yamllint disable-line rule:line-length
+      ansible.builtin.shell: openstack network list -f json | jq -r '.[] | select(.Name == "Ext-Net") | .ID'
+      register: NETWORK_ID
+
+- name: creating AMIs
+  hosts: "localhost:all"
+  run_once: true
+  tasks:
+    - name: create BASE
+      ansible.builtin.shell:
+        cmd: packer build -only=base packer.json
+        chdir: ../amis
